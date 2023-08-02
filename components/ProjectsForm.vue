@@ -1,5 +1,6 @@
 <script setup lang="ts">
-
+import { toTypedSchema } from "@vee-validate/zod";
+import * as zod from "zod";
 const form= reactive({
   title:"",
   description:"",
@@ -11,6 +12,22 @@ const form= reactive({
   finishesAt:useDateFormat(getDateXMonthsFromNow(6),"YYYY-MM-DD").value
 
 })
+const d= new Date("YYYY-MM-DD");
+// validation
+const dateToday=useDateFormat(useNow(), 'YYYY-MM-DD')
+const validationSchema= toTypedSchema(
+  zod.object({
+    title:zod.string().nonempty('Project title is required').min(10,{message:"Title must be at least 10 characters long"}),
+    description:zod.string().nonempty("Description of the project is required"),
+    categoryUuid:zod.string().nonempty("Category is required"),
+    softCap:zod.number().min(10000,{message:"Too low"}).max(100000,{message:"Too high"}),
+    hardCap:zod.number().min(10000,{message:"Too low"}).max(100000,{message:"Too high"}),
+    startsAt: zod.coerce.date().min(new Date(dateToday.value),{ message: "Start date must be today or later" }),
+    finishesAt:zod.coerce.date().max(getDateXMonthsFromNow(6),{message:'End date must be no more than 6 months away'}).min(new Date(dateToday.value),{ message: "End date must be today or later" }),
+  })
+
+);
+
 
 // keep hardcap always above softcap and vice versa
 watch([() => form.softCap], ([soft]) => {
@@ -42,8 +59,14 @@ const submitFrom =async () => {
 <template>
   <div class="w-full max-w-5xl mx-auto mb-20">
     <h3 class="py-5 text-3xl">Kickstart your own project</h3>
+
     <div class="grid grid-cols-12 gap-8">
-      <form @submit.prevent="submitFrom" class="w-full col-span-8">
+      <Form
+        @submit.prevent="submitFrom"
+        :validation-schema="validationSchema"
+        class="w-full col-span-8"
+      >
+        {{ d }}{{ form.startsAt }}
         <div class="w-full max-w-full mb-4 form-control">
           <FormField
             label="What is your project name?"
@@ -165,7 +188,7 @@ const submitFrom =async () => {
 
           <button class="w-full btn btn-primary">Publish your project</button>
         </div>
-      </form>
+      </Form>
       <div class="col-span-4">
         <ProjectCard
           :project="{
