@@ -22,5 +22,9 @@ module.exports = {
     "border-t-error",
     "border-t-success",
     "border-t-info",
+    "alert-warning",
+    "alert-error",
+    "alert-success",
+    "alert-info",
   ],
 };

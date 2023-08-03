@@ -12,26 +12,43 @@ interface Alert extends AlertOptions {
 }
 
 export const useAlerts = () => {
-  const alerts: Alert[] = [];
+  const alerts: Ref<Alert[]> = useState("alerts", () => []);
 
   function dismiss(idOrAlert: string | Alert) {
     console.log("dismissing");
+    const id = typeof idOrAlert === "object" ? idOrAlert.id : idOrAlert;
+    alerts.value = alerts.value.filter((alert) => alert.id != id);
+  }
+  function addAlert(message: string, options: AlertOptions) {
+    const id = nanoid();
+    const defaults: Partial<Alert> = {
+      type: "info",
+      dismissiable: true,
+      timeout: 5000,
+    };
+    alerts.value.push({ id, ...defaults, message, ...options });
+
+    let timeout =
+      options.timeout === undefined ? defaults.timeout : options.timeout;
+    if (timeout) {
+      setTimeout(() => dismiss(id), timeout);
+    }
   }
 
   function success(message: string, options: AlertOptions = {}) {
-    window.alert("SUCCESS: " + message);
+    addAlert(message, { ...options, type: "success" });
   }
 
   function error(message: string, options: AlertOptions = {}) {
-    window.alert("ERROR: " + message);
+    addAlert(message, { ...options, type: "error" });
   }
 
   function info(message: string, options: AlertOptions = {}) {
-    window.alert("INFO: " + message);
+    addAlert(message, { ...options, type: "info" });
   }
 
   function warning(message: string, options: AlertOptions = {}) {
-    window.alert("WARNING: " + message);
+    addAlert(message, { ...options, type: "warning" });
   }
 
   return {
